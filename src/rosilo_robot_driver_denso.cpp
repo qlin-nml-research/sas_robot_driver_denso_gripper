@@ -129,7 +129,7 @@ DQ RobotDriverDenso::get_end_effector_pose_dq()
     return _homogenous_vector_to_dq(homogenousvector);
 }
 
-void RobotDriverDenso::set_joint_positions(const VectorXd &desired_joint_positions_rad)
+void RobotDriverDenso::set_target_joint_positions(const VectorXd &desired_joint_positions_rad)
 {
     const VectorXd desired_joint_positions_deg = rad2deg(desired_joint_positions_rad);
     std::vector<double> joint_positions_local_buffer(desired_joint_positions_deg.data(), desired_joint_positions_deg.data() + 6);
