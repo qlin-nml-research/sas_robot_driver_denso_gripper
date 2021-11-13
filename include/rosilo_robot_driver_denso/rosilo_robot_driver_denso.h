@@ -26,18 +26,21 @@
 #include <exception>
 #include <tuple>
 #include <atomic>
+#include <vector>
+#include <memory>
 
 #include <dqrobotics/DQ.h>
 
 #include <rosilo_robot_driver/rosilo_robot_driver.h>
-
-#include "../../src/rosilo_driver_bcap.h"
 
 using namespace DQ_robotics;
 using namespace Eigen;
 
 namespace rosilo
 {
+//Declared internally
+class DriverBcap;
+
 struct RobotDriverDensoConfiguration
 {
     std::string ip_address;
@@ -52,7 +55,7 @@ private:
     RobotDriverDensoConfiguration configuration_;
 
     //BCAP driver
-    DriverBcap bcap_driver_;
+    std::unique_ptr<DriverBcap> bcap_driver_;
 
     //Joint positions
     VectorXd joint_positions_;

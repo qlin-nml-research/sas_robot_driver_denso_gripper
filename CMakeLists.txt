@@ -3,7 +3,7 @@ project(rosilo_robot_driver_denso)
 
 #Add custom (non compiling) targets so launch scripts and python files show up in QT Creator's project view.
 file(GLOB_RECURSE EXTRA_FILES */*)
-add_custom_target(${PROJECT_NAME}_OTHER_FILES ALL WORKING_DIRECTORY ${PROJECT_SOURCE_DIR} SOURCES ${EXTRA_FILES})
+#add_custom_target(${PROJECT_NAME}_OTHER_FILES ALL WORKING_DIRECTORY ${PROJECT_SOURCE_DIR} SOURCES ${EXTRA_FILES})
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -72,3 +72,36 @@ add_dependencies(rosilo_robot_driver_denso ${${PROJECT_NAME}_EXPORTED_TARGETS} $
 target_link_libraries(rosilo_robot_driver_denso
     ${catkin_LIBRARIES}
     )
+    
+#############
+## Install ##
+#############
+
+# all install targets should use catkin DESTINATION variables
+# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
+
+## Mark executable scripts (Python etc.) for installation
+## in contrast to setup.py, you can choose the destination
+# install(PROGRAMS
+#   scripts/my_python_script
+#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
+
+## Mark executables and/or libraries for installation
+install(TARGETS ${PROJECT_NAME}
+  DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
+## Mark cpp header files for installation
+install(DIRECTORY include/${PROJECT_NAME}/
+   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+   FILES_MATCHING PATTERN "*.h"
+#   PATTERN ".svn" EXCLUDE
+ )
+
+## Mark other files for installation (e.g. launch and bag files, etc.)
+# install(FILES
+#   # myfile1
+#   # myfile2
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# )

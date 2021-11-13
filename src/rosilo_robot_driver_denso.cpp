@@ -25,6 +25,7 @@
 #include "rosilo_robot_driver_denso/rosilo_robot_driver_denso.h"
 #include "rosilo_clock/rosilo_clock.h"
 #include <dqrobotics/utils/DQ_Math.h>
+#include "../../src/rosilo_driver_bcap.h"
 
 #include <vector>
 #include <memory>
@@ -37,7 +38,7 @@ const int RobotDriverDenso::SLAVE_MODE_END_EFFECTOR_CONTROL = 0x103;
 RobotDriverDenso::RobotDriverDenso(const RobotDriverDensoConfiguration &configuration, std::atomic_bool *break_loops):
     RobotDriver(break_loops),
     configuration_(configuration),
-    bcap_driver_(configuration.ip_address, configuration.port)
+    bcap_driver_(new DriverBcap(configuration.ip_address, configuration.port))
 {
     joint_positions_.resize(6);
     end_effector_pose_.resize(7);
@@ -48,10 +49,10 @@ RobotDriverDenso::RobotDriverDenso(const RobotDriverDensoConfiguration &configur
 
 VectorXd RobotDriverDenso::get_joint_positions()
 {
-    const bool worked = bcap_driver_.get_joint_positions(joint_positions_buffer_);
+    const bool worked = bcap_driver_->get_joint_positions(joint_positions_buffer_);
     if(!worked)
     {
-        throw std::runtime_error("Error in DensoRobotDriver::get_joint_positions. bCapDriver::" + bcap_driver_.get_last_error_info());
+        throw std::runtime_error("Error in DensoRobotDriver::get_joint_positions. bCapDriver::" + bcap_driver_->get_last_error_info());
     }
     Map<VectorXd> joint_positions_(joint_positions_buffer_.data(),6);
     return deg2rad(joint_positions_);
@@ -59,10 +60,10 @@ VectorXd RobotDriverDenso::get_joint_positions()
 
 VectorXd RobotDriverDenso::_get_end_effector_pose_homogenous_transformation()
 {
-    const bool worked = bcap_driver_.get_end_effector_pose_homogenous_transformation(end_effector_pose_homogenous_transformation_buffer_);
+    const bool worked = bcap_driver_->get_end_effector_pose_homogenous_transformation(end_effector_pose_homogenous_transformation_buffer_);
     if(!worked)
     {
-        throw std::runtime_error("Error in DensoRobotDriver::_get_end_effector_pose_homogenous_transformation. bCapDriver::" + bcap_driver_.get_last_error_info());
+        throw std::runtime_error("Error in DensoRobotDriver::_get_end_effector_pose_homogenous_transformation. bCapDriver::" + bcap_driver_->get_last_error_info());
     }
     Map<VectorXd> end_effetor_pose(end_effector_pose_homogenous_transformation_buffer_.data(),10);
     return end_effetor_pose;
@@ -120,10 +121,10 @@ DQ RobotDriverDenso::_homogenous_vector_to_dq(const VectorXd& homogenousvector) 
 
 DQ RobotDriverDenso::get_end_effector_pose_dq()
 {
-    const bool worked = bcap_driver_.get_end_effector_pose_homogenous_transformation(end_effector_pose_homogenous_transformation_buffer_);
+    const bool worked = bcap_driver_->get_end_effector_pose_homogenous_transformation(end_effector_pose_homogenous_transformation_buffer_);
     if(worked)
     {
-        throw std::runtime_error("FAILED in DensoRobotDriver::get_end_effector_pose_dq(). Error in BCAPDriver::" + bcap_driver_.get_last_error_info());
+        throw std::runtime_error("FAILED in DensoRobotDriver::get_end_effector_pose_dq(). Error in BCAPDriver::" + bcap_driver_->get_last_error_info());
     }
     Map<VectorXd> homogenousvector(end_effector_pose_homogenous_transformation_buffer_.data(),10);
     return _homogenous_vector_to_dq(homogenousvector);
@@ -133,9 +134,9 @@ void RobotDriverDenso::set_target_joint_positions(const VectorXd &desired_joint_
 {
     const VectorXd desired_joint_positions_deg = rad2deg(desired_joint_positions_rad);
     std::vector<double> joint_positions_local_buffer(desired_joint_positions_deg.data(), desired_joint_positions_deg.data() + 6);
-    if(!bcap_driver_.set_joint_positions(joint_positions_local_buffer))
+    if(!bcap_driver_->set_joint_positions(joint_positions_local_buffer))
     {
-        throw std::runtime_error("FAILED in DensoRobotDriver::set_joint_positions(). Error in BCAPDriver::" + bcap_driver_.get_last_error_info());
+        throw std::runtime_error("FAILED in DensoRobotDriver::set_joint_positions(). Error in BCAPDriver::" + bcap_driver_->get_last_error_info());
     }
 }
 
@@ -145,10 +146,10 @@ void RobotDriverDenso::set_target_joint_positions(const VectorXd &desired_joint_
     const VectorXd desired_joint_positions_deg = rad2deg(desired_joint_positions_rad);
 
     std::vector<double> set_joint_positions_local_buffer(desired_joint_positions_deg.data(), desired_joint_positions_deg.data() + 6);
-    const bool worked = bcap_driver_.set_and_get_joint_positions(set_joint_positions_local_buffer, joint_positions_buffer_);
+    const bool worked = bcap_driver_->set_and_get_joint_positions(set_joint_positions_local_buffer, joint_positions_buffer_);
     if(!worked)
     {
-        throw std::runtime_error("FAILED in DensoRobotDriver::set_and_get_joint_positions(). Error in BCAPDriver::" + bcap_driver_.get_last_error_info());
+        throw std::runtime_error("FAILED in DensoRobotDriver::set_and_get_joint_positions(). Error in BCAPDriver::" + bcap_driver_->get_last_error_info());
     }
     Map<VectorXd> joint_positions(joint_positions_buffer_.data(),6);
     return joint_positions;
@@ -199,7 +200,7 @@ bool RobotDriverDenso::set_end_effector_pose_dq(const DQ& pose)
     VectorXd homogenousvector = _dq_to_homogenous_vector(pose);
 
     std::vector<double> end_effector_pose_local_buffer(homogenousvector.data(), homogenousvector.data() + 10);
-    return bcap_driver_.set_end_effector_pose_homogenous_transformation(end_effector_pose_local_buffer);
+    return bcap_driver_->set_end_effector_pose_homogenous_transformation(end_effector_pose_local_buffer);
 }
 
 void RobotDriverDenso::connect()
@@ -245,36 +246,36 @@ void RobotDriverDenso::_connect()
 {
     bool worked; //bCap communication error code
 
-    worked = bcap_driver_.open();
+    worked = bcap_driver_->open();
     if(!worked)
     {
-        throw std::runtime_error("  FAILED TO Open() IN FUNCTION Connect(). Error code = " + bcap_driver_.get_last_error_info());
+        throw std::runtime_error("  FAILED TO Open() IN FUNCTION Connect(). Error code = " + bcap_driver_->get_last_error_info());
     }
 
-    worked = bcap_driver_.service_start();
+    worked = bcap_driver_->service_start();
     if(!worked)
     {
-        throw std::runtime_error("  FAILED TO ServiceStart() IN FUNCTION Connect(). Error code = " + bcap_driver_.get_last_error_info());
+        throw std::runtime_error("  FAILED TO ServiceStart() IN FUNCTION Connect(). Error code = " + bcap_driver_->get_last_error_info());
     }
 
-    worked = bcap_driver_.controller_connect();
+    worked = bcap_driver_->controller_connect();
     if(!worked)
     {
-        throw std::runtime_error("  FAILED TO ControllerConnect() IN FUNCTION Connect(). Error code = " + bcap_driver_.get_last_error_info());
+        throw std::runtime_error("  FAILED TO ControllerConnect() IN FUNCTION Connect(). Error code = " + bcap_driver_->get_last_error_info());
     }
 
-    bcap_driver_.initialize_controller_variable_handles();
+    bcap_driver_->initialize_controller_variable_handles();
 
-    worked = bcap_driver_.get_robot();
+    worked = bcap_driver_->get_robot();
     if(!worked)
     {
-        throw std::runtime_error("  FAILED TO GetRobot() IN FUNCTION Connect(). Error code = " + bcap_driver_.get_last_error_info());
+        throw std::runtime_error("  FAILED TO GetRobot() IN FUNCTION Connect(). Error code = " + bcap_driver_->get_last_error_info());
     }
 
-    worked = bcap_driver_.take_arm();
+    worked = bcap_driver_->take_arm();
     if(!worked)
     {
-        throw std::runtime_error("  FAILED TO TakeArm() IN FUNCTION Connect(). Error code = " + bcap_driver_.get_last_error_info());
+        throw std::runtime_error("  FAILED TO TakeArm() IN FUNCTION Connect(). Error code = " + bcap_driver_->get_last_error_info());
     }
 }
 
@@ -282,10 +283,10 @@ void RobotDriverDenso::_motor_on()
 {
     bool worked; //bCap communication error code
 
-    worked = bcap_driver_.set_motor_state(true);
+    worked = bcap_driver_->set_motor_state(true);
     if(!worked)
     {
-        throw std::runtime_error("  FAILED TO SetMotorState() IN FUNCTION MotorOn(). Error code = " + bcap_driver_.get_last_error_info());
+        throw std::runtime_error("  FAILED TO SetMotorState() IN FUNCTION MotorOn(). Error code = " + bcap_driver_->get_last_error_info());
     }
 }
 
@@ -293,10 +294,10 @@ void RobotDriverDenso::_set_speed(const float& speed, const float& acceleration,
 {
     bool worked; //bCap communication error code
 
-    worked = bcap_driver_.set_speed(speed,acceleration,deacceleration);
+    worked = bcap_driver_->set_speed(speed,acceleration,deacceleration);
     if(!worked)
     {
-        throw std::runtime_error("  FAILED TO SetSpeed() IN FUNCTION SetSpeed(). Error code = " + bcap_driver_.get_last_error_info());
+        throw std::runtime_error("  FAILED TO SetSpeed() IN FUNCTION SetSpeed(). Error code = " + bcap_driver_->get_last_error_info());
     }
 }
 
@@ -304,30 +305,30 @@ void RobotDriverDenso::_slave_mode_on(int mode)
 {
     bool worked; //bCap communication error code
 
-    worked = bcap_driver_.set_slave_mode(mode);
+    worked = bcap_driver_->set_slave_mode(mode);
     if(!worked)
     {
-        throw std::runtime_error("  FAILED TO SlaveModeOn() IN FUNCTION SlaveModeOn(). Error code = " + bcap_driver_.get_last_error_info());
+        throw std::runtime_error("  FAILED TO SlaveModeOn() IN FUNCTION SlaveModeOn(). Error code = " + bcap_driver_->get_last_error_info());
     }
 }
 
 void RobotDriverDenso::_motor_off() noexcept
 {
-    bcap_driver_.set_motor_state(false);
+    bcap_driver_->set_motor_state(false);
 }
 
 void RobotDriverDenso::_slave_mode_off() noexcept
 {
-    bcap_driver_.set_slave_mode(0);
+    bcap_driver_->set_slave_mode(0);
 }
 
 void RobotDriverDenso::disconnect()
 {
-    bcap_driver_.give_arm();
-    bcap_driver_.release_robot();
-    bcap_driver_.controller_disconnect();
-    bcap_driver_.service_stop();
-    bcap_driver_.close();
+    bcap_driver_->give_arm();
+    bcap_driver_->release_robot();
+    bcap_driver_->controller_disconnect();
+    bcap_driver_->service_stop();
+    bcap_driver_->close();
 }
 
 }
