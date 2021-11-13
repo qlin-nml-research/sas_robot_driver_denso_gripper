@@ -1,20 +1,20 @@
 /*
 # Copyright (c) 2016-2020 Murilo Marques Marinho
 #
-#    This file is part of rosilo_denso_communcation.
+#    This file is part of sas_denso_communcation.
 #
-#    rosilo_denso_communcation is free software: you can redistribute it and/or modify
+#    sas_denso_communcation is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Lesser General Public License as published by
 #    the Free Software Foundation, either version 3 of the License, or
 #    (at your option) any later version.
 #
-#    rosilo_denso_communcation is distributed in the hope that it will be useful,
+#    sas_denso_communcation is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #    GNU Lesser General Public License for more details.
 #
 #    You should have received a copy of the GNU Lesser General Public License
-#    along with rosilo_denso_communcation.  If not, see <https://www.gnu.org/licenses/>.
+#    along with sas_denso_communcation.  If not, see <https://www.gnu.org/licenses/>.
 #
 # ################################################################
 #
@@ -22,15 +22,15 @@
 #
 # ################################################################*/
 
-#include "rosilo_robot_driver_denso/rosilo_robot_driver_denso.h"
-#include "rosilo_clock/rosilo_clock.h"
+#include "sas_robot_driver_denso/sas_robot_driver_denso.h"
+#include "sas_clock/sas_clock.h"
 #include <dqrobotics/utils/DQ_Math.h>
-#include "../../src/rosilo_driver_bcap.h"
+#include "../../src/sas_driver_bcap.h"
 
 #include <vector>
 #include <memory>
 
-namespace rosilo
+namespace sas
 {
 const int RobotDriverDenso::SLAVE_MODE_JOINT_CONTROL        = 0x102;
 const int RobotDriverDenso::SLAVE_MODE_END_EFFECTOR_CONTROL = 0x103;
@@ -219,7 +219,7 @@ void RobotDriverDenso::connect()
 void RobotDriverDenso::deinitialize()
 {
     //10 ms clock
-    std::unique_ptr<rosilo::Clock> clock(new rosilo::Clock(10000000));
+    std::unique_ptr<sas::Clock> clock(new sas::Clock(10000000));
     clock->init();
     _slave_mode_off();
     clock->blocking_sleep_seconds(3.);
@@ -232,13 +232,13 @@ void RobotDriverDenso::deinitialize()
 void RobotDriverDenso::initialize()
 {
     //10 ms clock
-    std::unique_ptr<rosilo::Clock> clock(new rosilo::Clock(10000000));
+    std::unique_ptr<sas::Clock> clock(new sas::Clock(10000000));
     clock->init();
     _motor_on();
     clock->safe_sleep_seconds(6., break_loops_);
     _set_speed(configuration_.speed, configuration_.speed, configuration_.speed);
     clock->safe_sleep_seconds(6., break_loops_);
-    _slave_mode_on(rosilo::RobotDriverDenso::SLAVE_MODE_JOINT_CONTROL);
+    _slave_mode_on(sas::RobotDriverDenso::SLAVE_MODE_JOINT_CONTROL);
     clock->safe_sleep_seconds(6., break_loops_);
 }
 

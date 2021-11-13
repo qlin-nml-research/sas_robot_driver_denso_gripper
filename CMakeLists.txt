@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(rosilo_robot_driver_denso)
+project(sas_robot_driver_denso)
 
 #Add custom (non compiling) targets so launch scripts and python files show up in QT Creator's project view.
 file(GLOB_RECURSE EXTRA_FILES */*)
@@ -16,8 +16,8 @@ add_definitions(-D_USE_LINUX_API)
 find_package(catkin REQUIRED COMPONENTS
     roscpp
     rospy
-    rosilo_clock
-    rosilo_robot_driver
+    sas_clock
+    sas_robot_driver
     )
 
 ###################################
@@ -31,8 +31,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
     INCLUDE_DIRS include
-    LIBRARIES rosilo_robot_driver_denso
-    CATKIN_DEPENDS roscpp rospy rosilo_clock rosilo_robot_driver
+    LIBRARIES sas_robot_driver_denso
+    CATKIN_DEPENDS roscpp rospy sas_clock sas_robot_driver
     # DEPENDS dqrobotics
     )
 
@@ -51,9 +51,9 @@ include_directories(
     ${catkin_INCLUDE_DIRS}
     )
 
-add_library(rosilo_robot_driver_denso
-    src/rosilo_driver_bcap.cpp
-    src/rosilo_robot_driver_denso.cpp
+add_library(sas_robot_driver_denso
+    src/sas_driver_bcap.cpp
+    src/sas_robot_driver_denso.cpp
 
     src/bcap/bCAPClient/bcap_client.c
 
@@ -67,9 +67,9 @@ add_library(rosilo_robot_driver_denso
     src/bcap/dn_socket.c
     )
 
-add_dependencies(rosilo_robot_driver_denso ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(sas_robot_driver_denso ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(rosilo_robot_driver_denso
+target_link_libraries(sas_robot_driver_denso
     ${catkin_LIBRARIES}
     )
     
