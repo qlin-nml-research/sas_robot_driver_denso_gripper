@@ -331,6 +331,8 @@ void RobotDriverDenso::disconnect()
     bcap_driver_->close();
 }
 
+RobotDriverDenso::~RobotDriverDenso()=default;
+
 }
 
 

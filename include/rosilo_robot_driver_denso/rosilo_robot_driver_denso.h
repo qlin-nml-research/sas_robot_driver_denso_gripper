@@ -85,6 +85,7 @@ public:
 
     RobotDriverDenso(const RobotDriverDenso&)=delete;
     RobotDriverDenso()=delete;
+    ~RobotDriverDenso();
 
     RobotDriverDenso(const RobotDriverDensoConfiguration& configuration, std::atomic_bool* break_loops);
 
