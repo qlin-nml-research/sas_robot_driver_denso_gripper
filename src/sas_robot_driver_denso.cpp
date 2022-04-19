@@ -1,24 +1,24 @@
 /*
-# Copyright (c) 2016-2020 Murilo Marques Marinho
+# Copyright (c) 2016-2022 Murilo Marques Marinho
 #
-#    This file is part of sas_denso_communcation.
+#    This file is part of sas_robot_driver_denso.
 #
 #    sas_denso_communcation is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Lesser General Public License as published by
 #    the Free Software Foundation, either version 3 of the License, or
 #    (at your option) any later version.
 #
-#    sas_denso_communcation is distributed in the hope that it will be useful,
+#    sas_robot_driver_denso is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #    GNU Lesser General Public License for more details.
 #
 #    You should have received a copy of the GNU Lesser General Public License
-#    along with sas_denso_communcation.  If not, see <https://www.gnu.org/licenses/>.
+#    along with sas_robot_driver_denso.  If not, see <https://www.gnu.org/licenses/>.
 #
 # ################################################################
 #
-#   Author: Murilo M. Marinho, email: murilo@nml.t.u-tokyo.ac.jp
+#   Author: Murilo M. Marinho, email: murilo@g.ecc.u-tokyo.ac.jp
 #
 # ################################################################*/
 
@@ -122,7 +122,7 @@ DQ RobotDriverDenso::_homogenous_vector_to_dq(const VectorXd& homogenousvector) 
 DQ RobotDriverDenso::get_end_effector_pose_dq()
 {
     const bool worked = bcap_driver_->get_end_effector_pose_homogenous_transformation(end_effector_pose_homogenous_transformation_buffer_);
-    if(worked)
+    if(!worked)
     {
         throw std::runtime_error("FAILED in DensoRobotDriver::get_end_effector_pose_dq(). Error in BCAPDriver::" + bcap_driver_->get_last_error_info());
     }
