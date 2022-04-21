@@ -67,9 +67,18 @@ add_library(sas_robot_driver_denso
     src/bcap/dn_socket.c
     )
 
+add_executable(sas_robot_driver_denso_node
+    src/sas_robot_driver_denso_node.cpp)
+
 add_dependencies(sas_robot_driver_denso ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(sas_robot_driver_denso
+    dqrobotics
+    ${catkin_LIBRARIES}
+    )
+
+target_link_libraries(sas_robot_driver_denso_node
+    sas_robot_driver_denso
     ${catkin_LIBRARIES}
     )
     
@@ -90,6 +99,10 @@ target_link_libraries(sas_robot_driver_denso
 ## Mark executables and/or libraries for installation
 install(TARGETS ${PROJECT_NAME}
   DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
+install(TARGETS sas_robot_driver_denso_node
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 ## Mark cpp header files for installation
