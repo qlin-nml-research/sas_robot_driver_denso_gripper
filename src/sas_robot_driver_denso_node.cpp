@@ -62,7 +62,10 @@ int main(int argc, char** argv)
         ROS_INFO_STREAM(ros::this_node::getName()+"::Instantiating DENSO robot (bCap).");
         sas::RobotDriverDenso robot_driver_denso(robot_driver_denso_configuration,&kill_this_process);
         ROS_INFO_STREAM(ros::this_node::getName()+"::Instantiating RobotDriverROS.");
-        sas::RobotDriverROS robot_driver_ros(nh, robot_driver_ros_configuration, &kill_this_process);
+        sas::RobotDriverROS robot_driver_ros(nh,
+                                             &robot_driver_denso,
+                                             robot_driver_ros_configuration,
+                                             &kill_this_process);
         robot_driver_ros.control_loop();
     }
     catch (const std::exception& e)
