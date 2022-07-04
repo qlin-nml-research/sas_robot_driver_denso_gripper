@@ -24,6 +24,7 @@
 #include <exception>
 #include <dqrobotics/utils/DQ_Math.h>
 #include <dqrobotics/interfaces/json11/DQ_JsonReader.h>
+#include <sas_common/sas_common.h>
 #include <sas_conversions/eigen3_std_conversions.h>
 #include <sas_robot_driver/sas_robot_driver_ros.h>
 #include <sas_robot_driver_denso/sas_robot_driver_denso.h>
@@ -51,13 +52,13 @@ int main(int argc, char** argv)
     ROS_INFO_STREAM(ros::this_node::getName()+"::Loading parameters from parameter server.");
     ros::NodeHandle nh;
     sas::RobotDriverDensoConfiguration robot_driver_denso_configuration;
-    sas::smart_get_param(nh,"/robot_ip_address",robot_driver_denso_configuration.ip_address);
-    sas::smart_get_param(nh,"/robot_port",robot_driver_denso_configuration.port);
-    sas::smart_get_param(nh,"/robot_speed",robot_driver_denso_configuration.speed);
+    sas::get_ros_param(nh,"/robot_ip_address",robot_driver_denso_configuration.ip_address);
+    sas::get_ros_param(nh,"/robot_port",robot_driver_denso_configuration.port);
+    sas::get_ros_param(nh,"/robot_speed",robot_driver_denso_configuration.speed);
     sas::RobotDriverROSConfiguration robot_driver_ros_configuration;
-    sas::smart_get_param(nh,"/thread_sampling_time_nsec",robot_driver_ros_configuration.thread_sampling_time_nsec);
-    sas::smart_get_param(nh,"/q_min",robot_driver_ros_configuration.q_min);
-    sas::smart_get_param(nh,"/q_max",robot_driver_ros_configuration.q_max);
+    sas::get_ros_param(nh,"/thread_sampling_time_nsec",robot_driver_ros_configuration.thread_sampling_time_nsec);
+    sas::get_ros_param(nh,"/q_min",robot_driver_ros_configuration.q_min);
+    sas::get_ros_param(nh,"/q_max",robot_driver_ros_configuration.q_max);
     robot_driver_ros_configuration.robot_driver_provider_prefix = ros::this_node::getName();
 
     try

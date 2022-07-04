@@ -16,6 +16,7 @@ add_definitions(-D_USE_LINUX_API)
 find_package(catkin REQUIRED COMPONENTS
     roscpp
     rospy
+    sas_common
     sas_clock
     sas_robot_driver
     )
@@ -32,7 +33,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES sas_robot_driver_denso
-    CATKIN_DEPENDS roscpp rospy sas_clock sas_robot_driver
+    CATKIN_DEPENDS roscpp rospy sas_common sas_clock sas_robot_driver
     # DEPENDS dqrobotics
     )
 
