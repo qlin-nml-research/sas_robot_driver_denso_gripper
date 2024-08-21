@@ -1,1 +1,1 @@
-int8 position
+float32 position

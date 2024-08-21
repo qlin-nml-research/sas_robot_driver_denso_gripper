@@ -19,7 +19,25 @@ find_package(catkin REQUIRED COMPONENTS
     sas_common
     sas_clock
     sas_robot_driver
+    message_generation
     )
+add_service_files(
+        DIRECTORY srv
+        FILES
+        Move.srv
+)
+
+add_message_files(
+        DIRECTORY msg
+        FILES
+        GripperState.msg
+)
+
+generate_messages(
+        DEPENDENCIES
+        std_msgs
+
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -33,7 +51,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES sas_robot_driver_denso
-    CATKIN_DEPENDS roscpp rospy sas_common sas_clock sas_robot_driver
+    CATKIN_DEPENDS roscpp rospy sas_common sas_clock sas_robot_driver message_runtime
     # DEPENDS dqrobotics
     )
 
@@ -56,26 +74,14 @@ include_directories(
 add_library(robot_mutex
     src/modules/robot_mutex.cpp
         test/test_robot_mutex.cpp
+        include/sas_robot_driver_denso/sas_robot_driver_cobotta_hand.h
+        src/modules/robot_gripper_provider.cpp
+        src/modules/robot_gripper_provider.h
 )
 
 target_link_libraries(robot_mutex
     -lpthread -lrt
 )
-
-
-#### test ####
-add_executable(test_robot_mutex
-    test/test_robot_mutex.cpp
-)
-target_link_libraries(test_robot_mutex
-    robot_mutex
-    -lpthread
-)
-install(TARGETS test_robot_mutex
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-
 
 add_library(sas_robot_driver_denso
     src/sas_driver_bcap.cpp
@@ -108,7 +114,72 @@ target_link_libraries(sas_robot_driver_denso_node
     sas_robot_driver_denso
     ${catkin_LIBRARIES}
     )
-    
+
+#### Hand interface
+add_library(sas_robot_cobotta_gripper_provider
+        src/modules/robot_gripper_provider.cpp
+)
+
+target_link_libraries(
+    sas_robot_cobotta_gripper_provider
+    ${catkin_LIBRARIES}
+)
+
+add_dependencies(sas_robot_cobotta_gripper_provider ${${PROJECT_NAME}_EXPORTED_TARGETS})
+add_dependencies(sas_robot_cobotta_gripper_provider ${catkin_EXPORTED_TARGETS})
+
+
+add_library(sas_robot_driver_cobotta_hand
+    src/sas_robot_driver_cobotta_hand.cpp
+    src/sas_driver_bcap.cpp
+
+    src/bcap/bCAPClient/bcap_client.c
+
+    src/bcap/bcap_common.c
+    src/bcap/dn_com.c
+    src/bcap/dn_common.c
+    src/bcap/dn_device.c
+    src/bcap/dn_tcp.c
+    src/bcap/dn_udp.c
+    src/bcap/dn_thread.c
+    src/bcap/dn_socket.c
+)
+
+target_link_libraries(
+    sas_robot_driver_cobotta_hand
+    sas_robot_cobotta_gripper_provider
+    dqrobotics
+    robot_mutex
+    ${catkin_LIBRARIES}
+)
+
+add_executable(sas_robot_driver_denso_hand_node
+    src/sas_robot_driver_denso_hand_node.cpp
+)
+
+target_link_libraries(
+    sas_robot_driver_denso_hand_node
+    sas_robot_driver_cobotta_hand
+    ${catkin_LIBRARIES}
+)
+
+##################################################################################
+################################### test #########################################
+##################################################################################
+add_executable(test_robot_mutex
+        test/test_robot_mutex.cpp
+)
+target_link_libraries(test_robot_mutex
+        robot_mutex
+        -lpthread
+)
+install(TARGETS test_robot_mutex
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+##################################################################################
+################################### test #########################################
+##################################################################################
+
 #############
 ## Install ##
 #############
@@ -130,6 +201,10 @@ install(TARGETS ${PROJECT_NAME}
 
 install(TARGETS sas_robot_driver_denso_node
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(TARGETS sas_robot_driver_denso_hand_node
+        DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 ## Mark cpp header files for installation

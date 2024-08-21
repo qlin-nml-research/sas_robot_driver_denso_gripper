@@ -144,6 +144,11 @@ public:
 
     std::string get_last_error_info() const;
 
+
+    // added by Hung-Ching Lin for gripper
+    bool set_gripper_position(const unsigned char &position, const unsigned char &speed, VARIANT& result);
+    inline bool set_gripper_position(const unsigned char &position, const unsigned char &speed) {return set_gripper_position(position, speed, unwanted_variant_result_);}
+
 };
 
 }

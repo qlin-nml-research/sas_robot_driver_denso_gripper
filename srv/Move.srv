@@ -1,4 +1,4 @@
-int8 width
-int8 speed
+float32 width
+float32 speed
 ---
 bool success
