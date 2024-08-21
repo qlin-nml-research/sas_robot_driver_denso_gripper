@@ -55,6 +55,13 @@ int main(int argc, char** argv)
     sas::get_ros_param(nh,"/robot_ip_address",robot_driver_denso_configuration.ip_address);
     sas::get_ros_param(nh,"/robot_port",robot_driver_denso_configuration.port);
     sas::get_ros_param(nh,"/robot_speed",robot_driver_denso_configuration.speed);
+    try {
+        sas::get_ros_param(nh,"/using_hand",robot_driver_denso_configuration.using_hand);
+        if(robot_driver_denso_configuration.using_hand) {
+            robot_driver_denso_configuration.lock_name = ros::this_node::getName();
+            ROS_WARN_STREAM(ros::this_node::getName() + "::Using hand is enabled. We will instantiate a mutex to lock movement is.");
+        }
+    }catch(...){}
     sas::RobotDriverROSConfiguration robot_driver_ros_configuration;
     sas::get_ros_param(nh,"/thread_sampling_time_nsec",robot_driver_ros_configuration.thread_sampling_time_nsec);
     sas::get_ros_param(nh,"/q_min",robot_driver_ros_configuration.q_min);

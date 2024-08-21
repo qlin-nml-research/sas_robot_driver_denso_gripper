@@ -19,13 +19,15 @@
 # ################################################################
 #
 #   Author: Murilo M. Marinho, email: murilomarinho@ieee.org
-#
+#   Contributors: Hung-Ching Lin, email:qlin1806@g.ecc.u-tokyo.ac.jp
+#       -- added robot hand for cobotta robot
 # ################################################################*/
 
 #include "sas_robot_driver_denso/sas_robot_driver_denso.h"
 #include "sas_clock/sas_clock.h"
 #include <dqrobotics/utils/DQ_Math.h>
 #include "../../src/sas_driver_bcap.h"
+#include "../../src/modules/robot_mutex.h"
 
 #include <vector>
 #include <memory>
@@ -38,17 +40,29 @@ const int RobotDriverDenso::SLAVE_MODE_END_EFFECTOR_CONTROL = 0x103;
 RobotDriverDenso::RobotDriverDenso(const RobotDriverDensoConfiguration &configuration, std::atomic_bool *break_loops):
     RobotDriver(break_loops),
     configuration_(configuration),
-    bcap_driver_(new DriverBcap(configuration.ip_address, configuration.port))
+    bcap_driver_(new DriverBcap(configuration.ip_address, configuration.port)),
+    robot_resource_mutex_(nullptr)
 {
     joint_positions_.resize(6);
     end_effector_pose_.resize(7);
     joint_positions_buffer_.resize(8,0);
     end_effector_pose_euler_buffer_.resize(7,0);
     end_effector_pose_homogenous_transformation_buffer_.resize(10,0);
+
+    // Added 2024_08_21
+    if(configuration_.using_hand)
+    {
+        robot_resource_mutex_ = std::unique_ptr<RobotMutex>(new RobotMutex(configuration.lock_name, "joint", true));
+    }
 }
 
 VectorXd RobotDriverDenso::get_joint_positions()
 {
+    if(mutex_is_locked()) // Added 2024_08_21
+    {
+        Map<VectorXd> joint_positions_(joint_positions_buffer_.data(),6);
+        return deg2rad(joint_positions_);
+    }
     const bool worked = bcap_driver_->get_joint_positions(joint_positions_buffer_);
     if(!worked)
     {
@@ -60,6 +74,12 @@ VectorXd RobotDriverDenso::get_joint_positions()
 
 VectorXd RobotDriverDenso::_get_end_effector_pose_homogenous_transformation()
 {
+    if(mutex_is_locked()) // Added 2024_08_21
+    {
+        // return previous value
+        Map<VectorXd> end_effetor_pose(end_effector_pose_homogenous_transformation_buffer_.data(),10);
+        return end_effetor_pose;
+    }
     const bool worked = bcap_driver_->get_end_effector_pose_homogenous_transformation(end_effector_pose_homogenous_transformation_buffer_);
     if(!worked)
     {
@@ -121,6 +141,10 @@ DQ RobotDriverDenso::_homogenous_vector_to_dq(const VectorXd& homogenousvector) 
 
 DQ RobotDriverDenso::get_end_effector_pose_dq()
 {
+    if(mutex_is_locked()) {
+        Map<VectorXd> homogenousvector(end_effector_pose_homogenous_transformation_buffer_.data(),10);
+        return _homogenous_vector_to_dq(homogenousvector);
+    }
     const bool worked = bcap_driver_->get_end_effector_pose_homogenous_transformation(end_effector_pose_homogenous_transformation_buffer_);
     if(!worked)
     {
@@ -132,6 +156,9 @@ DQ RobotDriverDenso::get_end_effector_pose_dq()
 
 void RobotDriverDenso::set_target_joint_positions(const VectorXd &desired_joint_positions_rad)
 {
+    if(mutex_is_locked()) {
+        return;
+    }
     const VectorXd desired_joint_positions_deg = rad2deg(desired_joint_positions_rad);
     std::vector<double> joint_positions_local_buffer(desired_joint_positions_deg.data(), desired_joint_positions_deg.data() + 6);
     if(!bcap_driver_->set_joint_positions(joint_positions_local_buffer))
@@ -197,6 +224,9 @@ VectorXd RobotDriverDenso::_dq_to_homogenous_vector(const DQ& pose) const
 
 bool RobotDriverDenso::set_end_effector_pose_dq(const DQ& pose)
 {
+    if (mutex_is_locked()) {
+        return false;
+    }
     VectorXd homogenousvector = _dq_to_homogenous_vector(pose);
 
     std::vector<double> end_effector_pose_local_buffer(homogenousvector.data(), homogenousvector.data() + 10);
@@ -332,6 +362,16 @@ void RobotDriverDenso::disconnect()
 }
 
 RobotDriverDenso::~RobotDriverDenso()=default;
+
+
+// Added 2024_08_21 by Quentin Lin for cobotta robot
+bool RobotDriverDenso::mutex_is_locked() const {
+    if(robot_resource_mutex_==nullptr)
+    {
+        return false;
+    }
+    return robot_resource_mutex_->is_locked();
+}
 
 }
 

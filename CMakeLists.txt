@@ -49,8 +49,33 @@ include_directories(
     src/
     src/bcap
     src/bcap/bCAPClient
+    src/modules
     ${catkin_INCLUDE_DIRS}
     )
+
+add_library(robot_mutex
+    src/modules/robot_mutex.cpp
+        test/test_robot_mutex.cpp
+)
+
+target_link_libraries(robot_mutex
+    -lpthread -lrt
+)
+
+
+#### test ####
+add_executable(test_robot_mutex
+    test/test_robot_mutex.cpp
+)
+target_link_libraries(test_robot_mutex
+    robot_mutex
+    -lpthread
+)
+install(TARGETS test_robot_mutex
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+
 
 add_library(sas_robot_driver_denso
     src/sas_driver_bcap.cpp
@@ -75,6 +100,7 @@ add_dependencies(sas_robot_driver_denso ${${PROJECT_NAME}_EXPORTED_TARGETS} ${ca
 
 target_link_libraries(sas_robot_driver_denso
     dqrobotics
+    robot_mutex
     ${catkin_LIBRARIES}
     )
 
