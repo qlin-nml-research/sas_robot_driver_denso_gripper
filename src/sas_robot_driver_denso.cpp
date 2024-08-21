@@ -58,11 +58,11 @@ RobotDriverDenso::RobotDriverDenso(const RobotDriverDensoConfiguration &configur
 
 VectorXd RobotDriverDenso::get_joint_positions()
 {
-    if(mutex_is_locked()) // Added 2024_08_21
-    {
-        Map<VectorXd> joint_positions_(joint_positions_buffer_.data(),6);
-        return deg2rad(joint_positions_);
-    }
+    // if(mutex_is_locked()) // Added 2024_08_21
+    // {
+        // Map<VectorXd> joint_positions_(joint_positions_buffer_.data(),6);
+        // return deg2rad(joint_positions_);
+    // }
     const bool worked = bcap_driver_->get_joint_positions(joint_positions_buffer_);
     if(!worked)
     {
@@ -74,12 +74,11 @@ VectorXd RobotDriverDenso::get_joint_positions()
 
 VectorXd RobotDriverDenso::_get_end_effector_pose_homogenous_transformation()
 {
-    if(mutex_is_locked()) // Added 2024_08_21
-    {
-        // return previous value
-        Map<VectorXd> end_effetor_pose(end_effector_pose_homogenous_transformation_buffer_.data(),10);
-        return end_effetor_pose;
-    }
+    // if(mutex_is_locked()) // Added 2024_08_21
+    // {
+        // Map<VectorXd> end_effetor_pose(end_effector_pose_homogenous_transformation_buffer_.data(),10);
+        // return end_effetor_pose;
+    // }
     const bool worked = bcap_driver_->get_end_effector_pose_homogenous_transformation(end_effector_pose_homogenous_transformation_buffer_);
     if(!worked)
     {
@@ -141,10 +140,10 @@ DQ RobotDriverDenso::_homogenous_vector_to_dq(const VectorXd& homogenousvector) 
 
 DQ RobotDriverDenso::get_end_effector_pose_dq()
 {
-    if(mutex_is_locked()) {
-        Map<VectorXd> homogenousvector(end_effector_pose_homogenous_transformation_buffer_.data(),10);
-        return _homogenous_vector_to_dq(homogenousvector);
-    }
+    // if(mutex_is_locked()) {
+        // Map<VectorXd> homogenousvector(end_effector_pose_homogenous_transformation_buffer_.data(),10);
+        // return _homogenous_vector_to_dq(homogenousvector);
+    // }
     const bool worked = bcap_driver_->get_end_effector_pose_homogenous_transformation(end_effector_pose_homogenous_transformation_buffer_);
     if(!worked)
     {
