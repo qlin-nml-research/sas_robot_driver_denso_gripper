@@ -55,6 +55,8 @@ int main(int argc, char** argv)
     sas::get_ros_param(nh,"/robot_port",robot_driver_denso_hand_configuration.port);
     sas::get_ros_param(nh,"/default_speed",robot_driver_denso_hand_configuration.default_speed);
     sas::get_ros_param(nh,"/lock_name",robot_driver_denso_hand_configuration.lock_name);
+    sas::get_ros_param(nh,"/gripper_range_max",robot_driver_denso_hand_configuration.gripper_range_max);
+    sas::get_ros_param(nh,"/gripper_range_min",robot_driver_denso_hand_configuration.gripper_range_min);
 
     robot_driver_denso_hand_configuration.prefix = ros::this_node::getName();
     sas::RobotDriverDensoHand robot_driver_denso_hand(nh, robot_driver_denso_hand_configuration,&kill_this_process);

@@ -33,7 +33,6 @@
 // #include <sas_clock/sas_clock.h>
 
 #define ROBOT_DRIVER_HAND_LOOP_RATE 10  //100ms
-#define ROBOT_DRIVER_GRIPPER_RANGE_SCALING 100.0   // float in percentage to 0-100
 #define ROBOT_DRIVER_GRIPPER_SPEED_SCALING 100.0   // float in percentage to 0-100
 
 
@@ -50,6 +49,8 @@ namespace sas {
         int port;
         double default_speed;
         std::string lock_name;
+        int gripper_range_min;
+        int gripper_range_max;
     };
 
 
@@ -71,6 +72,10 @@ namespace sas {
 
         std::unique_ptr<CobottaGripperProvider> cobotta_gripper_provider_;
 
+        static inline double _clip(const double &n, const double &lower, const double &upper) {
+            return std::max(lower, std::min(n, upper));
+        }
+
     public:
         RobotDriverDensoHand(const RobotDriverDensoHand&)=delete;
         RobotDriverDensoHand()=delete;
@@ -88,7 +93,8 @@ namespace sas {
 
         void disconnect() const;
 
-        bool move_callback(const double& width, const double& speed_ratio);
+        bool blocking_
+        move(const double& width, const double& speed_ratio);
 
     };
 

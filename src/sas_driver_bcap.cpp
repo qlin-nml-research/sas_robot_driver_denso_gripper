@@ -470,7 +470,18 @@ bool DriverBcap::set_slave_mode(const int32_t& value, VARIANT& result)
     return return_value;
 }
 
-    // added by Hung-Ching Lin for gripper
+// added by Hung-Ching Lin for gripper
+inline bool DriverBcap::_controller_execute(const std::wstring& command, const VARIANT& option, VARIANT& result)
+{
+    BSTR command_bstr = SysAllocString(command.c_str());
+
+    bool return_value =_error_check(bCap_ControllerExecute(socket_, controller_handle_, command_bstr, option, &result));
+
+    SysFreeString(command_bstr);
+    return return_value;
+}
+
+
 bool DriverBcap::set_gripper_position(const unsigned char &position, const unsigned char &speed, VARIANT& result) {
     VARIANT argument;
     VariantInit(&argument);
@@ -482,7 +493,7 @@ bool DriverBcap::set_gripper_position(const unsigned char &position, const unsig
     param_data[1] = speed;
     SafeArrayUnaccessData(argument.parray);
 
-    bool return_value = _robot_execute(std::wstring(L"HandMoveA"), argument, result);
+    bool return_value = _controller_execute(std::wstring(L"HandMoveA"), argument, result);
 
     VariantClear(&argument);
 

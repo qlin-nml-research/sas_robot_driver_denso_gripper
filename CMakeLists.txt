@@ -73,10 +73,6 @@ include_directories(
 
 add_library(robot_mutex
     src/modules/robot_mutex.cpp
-        test/test_robot_mutex.cpp
-        include/sas_robot_driver_denso/sas_robot_driver_cobotta_hand.h
-        src/modules/robot_gripper_provider.cpp
-        src/modules/robot_gripper_provider.h
 )
 
 target_link_libraries(robot_mutex

@@ -70,26 +70,10 @@ namespace sas {
 
         bcap_driver_->initialize_controller_variable_handles();
 
-        worked = bcap_driver_->get_robot();
-        if(!worked)
-        {
-            throw std::runtime_error("  FAILED TO GetRobot() IN FUNCTION Connect(). Error code = " + bcap_driver_->get_last_error_info());
-        }
-
-        // worked = bcap_driver_->take_arm();
-        // if(!worked)
-        // {
-        //     throw std::runtime_error("  FAILED TO TakeArm() IN FUNCTION Connect(). Error code = " + bcap_driver_->get_last_error_info());
-        // }
-
     }
 
     void RobotDriverDensoHand::initialize() {
-
-
-
-
-        cobotta_gripper_provider_->register_move_function(std::bind(&RobotDriverDensoHand::move_callback, this, std::placeholders::_1, std::placeholders::_2));
+        cobotta_gripper_provider_->register_move_function(std::bind(&RobotDriverDensoHand::blocking_move, this, std::placeholders::_1, std::placeholders::_2));
     }
 
     void RobotDriverDensoHand::control_loop() {
@@ -112,41 +96,44 @@ namespace sas {
 
     void RobotDriverDensoHand::deinitialize() const {
         cobotta_gripper_provider_->deregister_move_function();
-
-
-
     }
 
     void RobotDriverDensoHand::disconnect() const {
-        // bcap_driver_->give_arm();
-        bcap_driver_->release_robot();
         bcap_driver_->controller_disconnect();
         bcap_driver_->service_stop();
         bcap_driver_->close();
     }
 
-    bool RobotDriverDensoHand::move_callback(const double& width, const double& speed_ratio) {
+    bool RobotDriverDensoHand::blocking_move(const double& width, const double& speed_ratio) {
         bool worked; //bCap communication error code
-        auto position = static_cast<unsigned char>(width*ROBOT_DRIVER_GRIPPER_RANGE_SCALING);
-        auto speed = static_cast<unsigned char>(speed_ratio*ROBOT_DRIVER_GRIPPER_SPEED_SCALING);
+        if(0>width || width>1)
+        {
+            ROS_WARN_STREAM("RobotDriverDensoHand::blocking_move: Requested width is out of range. Clipping to range [0,1].");
+        }
+        const auto _width = _clip(width, 0.0, 1.0);
+        const auto _speed = _clip(speed_ratio, 0.0, 1.0);
+        auto pos_double = _width*(configuration_.gripper_range_max-configuration_.gripper_range_min)+configuration_.gripper_range_min;
+        auto position = static_cast<unsigned char>(pos_double);
+        auto speed = static_cast<unsigned char>(_speed*ROBOT_DRIVER_GRIPPER_SPEED_SCALING);
 
         try {
             auto ret = robot_resource_mutex_->acquire();
             if (!ret) {
-                throw std::runtime_error("  FAILED TO acquire() IN FUNCTION move_callback(). Attempted acquiring robot resource lock TIMEOUT.");
+                throw std::runtime_error("  FAILED TO acquire() IN FUNCTION blocking_move(). Attempted acquiring robot resource lock TIMEOUT.");
             }
         }catch (std::exception &e) {
-            throw std::runtime_error("  FAILED TO acquire() IN FUNCTION move_callback(). Error in acquiring robot resource lock: " + std::string(e.what()));
+            throw std::runtime_error("  FAILED TO acquire() IN FUNCTION blocking_move(). Error in acquiring robot resource lock: " + std::string(e.what()));
         }
+
         worked = bcap_driver_->set_gripper_position(position, speed);
         if(!worked)
         {
             robot_resource_mutex_->release();
-            throw std::runtime_error("  FAILED TO set_gripper_position() IN FUNCTION move_callback(). Error code = " + bcap_driver_->get_last_error_info());
+            throw std::runtime_error("  FAILED TO set_gripper_position() IN FUNCTION blocking_move(). Error code = " + bcap_driver_->get_last_error_info());
         }
         desired_gripper_width_ = width;
 
-        // TODO: Maybe add a manual delay here
+        // TODO: function call to bcap appear to be blocking already
 
         robot_resource_mutex_->release();
         return true;

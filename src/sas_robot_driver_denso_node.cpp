@@ -60,6 +60,9 @@ int main(int argc, char** argv)
         if(robot_driver_denso_configuration.using_hand) {
             robot_driver_denso_configuration.lock_name = ros::this_node::getName();
             ROS_WARN_STREAM(ros::this_node::getName() + "::Using hand is enabled. We will instantiate a mutex to lock movement is.");
+            auto temp_str = robot_driver_denso_configuration.lock_name;
+            if(temp_str.front()=='/'){ temp_str = temp_str.substr(1);}
+            ROS_WARN_STREAM(ros::this_node::getName() + "::Please ensure that hand node is created with lock at [" + temp_str + "].");
         }
     }catch(...){}
     sas::RobotDriverROSConfiguration robot_driver_ros_configuration;

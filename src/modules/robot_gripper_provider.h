@@ -45,7 +45,7 @@ namespace sas {
 
     struct CobottaGripperProviderConfiguration
     {
-        double default_speed = 10;
+        double default_speed = 1.0;
         std::string topic_prefix;
     };
 
@@ -60,6 +60,10 @@ namespace sas {
         ros::ServiceServer move_server_;
 
         ros::Publisher gripper_status_publisher_;
+
+        static inline double _clip(const double &n, const double &lower, const double &upper) {
+            return std::max(lower, std::min(n, upper));
+        }
 
     public:
         CobottaGripperProvider(const CobottaGripperProvider&)=delete;

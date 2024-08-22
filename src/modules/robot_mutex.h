@@ -29,14 +29,15 @@
 #include <fcntl.h>
 #include <atomic>
 #include <stdexcept>
-#include <errno.h>
-#include <time.h>
+#include <cerrno>
+#include <ctime>
 #include <iostream>
 #include <chrono>
 #include <thread>
 
 #define ROBOT_MUTEX_PREFIX "/sas_denso_"
 #define ROBOT_MUTEX_MAX_TIMEOUT_MS 1000
+#define ROBOT_MUTEX_PERMISSIONS 0777
 
 #define THROW_RUNTIME_ERROR(msg) throw std::runtime_error("["+lock_name_space_+"/"+instance_name_+"]"+msg);
 #define THROW_RUNTIME_ERROR_FN(fn_name, msg) throw std::runtime_error("["+lock_name_space_+"/"+instance_name_+"]::"+fn_name+":"+msg);

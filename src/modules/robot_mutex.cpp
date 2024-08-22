@@ -67,7 +67,11 @@ namespace sas {
          * if the semaphore is not deleted in the previous run and is currently 0, there might be a deadlock with no one able to acquire it.
          * the master instance in this case will manage the deletion of the semaphore.
          */
-        if ((shared_mutex_ = sem_open ((ROBOT_MUTEX_PREFIX+lock_name_space).c_str(), O_CREAT, 0660, 1)) == SEM_FAILED) {
+        // if lock_name_space_ has leading / remove it
+        if(lock_name_space_.front() == '/') {
+            lock_name_space_ = lock_name_space_.substr(1);
+        }
+        if ((shared_mutex_ = sem_open((ROBOT_MUTEX_PREFIX+lock_name_space_).c_str(), O_CREAT, ROBOT_MUTEX_PERMISSIONS, 1)) == SEM_FAILED) {
             _check_erroron("RobotMutex");
         }else {
             std::cout << "RobotMutex:["<<lock_name_space_<<"/"<<instance_name_<<"]:created." << std::endl;

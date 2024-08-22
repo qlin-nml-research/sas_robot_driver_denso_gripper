@@ -1,0 +1,5 @@
+<launch>
+<node pkg="sas_robot_driver_denso" type="sas_robot_driver_denso_hand_node" name="cobotta_2_hand">
+<rosparam file="$(find sas_robot_driver_denso)/launch/sas_robot_driver_denso_cobotta_hand_example.yaml" command="load"/>
+</node>
+</launch>

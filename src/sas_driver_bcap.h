@@ -74,6 +74,7 @@ private:
 
     bool _error_check(const HRESULT& result);
     inline bool _robot_execute(const std::wstring& command, const VARIANT& option, VARIANT& result);
+    inline bool _controller_execute(const std::wstring& command, const VARIANT& option, VARIANT& result);
     HRESULT _set_socket_timeout(long micro_seconds);
     HRESULT _get_last_error() const;
 
