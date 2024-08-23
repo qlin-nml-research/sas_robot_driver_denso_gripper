@@ -20,7 +20,8 @@
 # ################################################################
 #
 #   Author: Murilo M. Marinho, email: murilomarinho@ieee.org
-#
+#   Contributors: Hung-Ching Lin, email:qlin1806@g.ecc.u-tokyo.ac.jp
+#       -- added robot hand for cobotta robot
 # ################################################################*/
 
 #include <exception>
@@ -40,12 +41,15 @@ namespace sas
 {
 //Declared internally
 class DriverBcap;
+class RobotMutex;
 
 struct RobotDriverDensoConfiguration
 {
     std::string ip_address;
     int port;
     double speed;
+    bool using_hand = false;  // for Cobotta robot, if using hand, we need to add a mutex to lock joint if hand is enabled
+    std::string lock_name;
 };
 
 
@@ -56,6 +60,9 @@ private:
 
     //BCAP driver
     std::unique_ptr<DriverBcap> bcap_driver_;
+
+    //Robot Resource Mutex
+    std::unique_ptr<RobotMutex> robot_resource_mutex_;
 
     //Joint positions
     VectorXd joint_positions_;
@@ -100,6 +107,11 @@ public:
 
     bool set_end_effector_pose_dq(const DQ& pose);
     DQ get_end_effector_pose_dq();
+
+    // Added 2024_08_21 by Quentin Lin for cobotta robot
+    bool mutex_is_locked() const;
+    bool mutex_acquire(const unsigned int &timeout_ms=0);
+    void mutex_release();
 };
 }
 

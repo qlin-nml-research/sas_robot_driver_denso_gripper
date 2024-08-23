@@ -470,6 +470,111 @@ bool DriverBcap::set_slave_mode(const int32_t& value, VARIANT& result)
     return return_value;
 }
 
+// added by Hung-Ching Lin for gripper
+inline bool DriverBcap::_controller_execute(const std::wstring& command, const VARIANT& option, VARIANT& result)
+{
+    BSTR command_bstr = SysAllocString(command.c_str());
+
+    bool return_value =_error_check(bCap_ControllerExecute(socket_, controller_handle_, command_bstr, option, &result));
+
+    SysFreeString(command_bstr);
+    return return_value;
+}
+
+bool DriverBcap::get_gripper_is_busy(bool& is_busy)
+{
+    VARIANT result;
+    VariantInit(&result);
+
+    bool return_value = _controller_execute(std::wstring(L"HandBusyState"), empty_variant_, result);
+    if(return_value)
+    {
+        is_busy = result.boolVal;
+    }
+    VariantClear(&result);
+
+    return return_value;
+}
+
+bool DriverBcap::get_gripper_is_holding(bool& is_holding)
+{
+    VARIANT result;
+    VariantInit(&result);
+
+    bool return_value = _controller_execute(std::wstring(L"HandHoldState"), empty_variant_, result);
+    if(return_value)
+    {
+        is_holding = result.boolVal;
+    }
+    VariantClear(&result);
+
+    return return_value;
+}
+
+bool DriverBcap::get_gripper_in_position(bool& in_position)
+{
+    VARIANT result;
+    VariantInit(&result);
+
+    bool return_value = _controller_execute(std::wstring(L"HandInposState"), empty_variant_, result);
+    if(return_value)
+    {
+        in_position = result.boolVal;
+    }
+    VariantClear(&result);
+
+    return return_value;
+}
+
+bool DriverBcap::get_gripper_position(double& position)
+{
+    VARIANT result;
+    VariantInit(&result);
+
+    bool return_value = _controller_execute(std::wstring(L"HandCurPos"), empty_variant_, result);
+    if(return_value)
+    {
+        position = result.dblVal;
+    }
+    VariantClear(&result);
+
+    return return_value;
+}
+
+bool DriverBcap::get_gripper_current_load(double& current_load)
+{
+    VARIANT result;
+    VariantInit(&result);
+
+    bool return_value = _controller_execute(std::wstring(L"HandCurLoad"), empty_variant_, result);
+    if(return_value)
+    {
+        current_load = result.dblVal;
+    }
+    VariantClear(&result);
+
+    return return_value;
+}
+
+
+bool DriverBcap::set_gripper_position(const unsigned char &position, const unsigned char &speed, VARIANT& result) {
+    VARIANT argument;
+    VariantInit(&argument);
+    u_int32_t* param_data;
+    argument.vt = VT_I4 | VT_ARRAY;
+    argument.parray = SafeArrayCreateVector(VT_I4,0,2);
+    SafeArrayAccessData(argument.parray,(void**)&param_data);
+    param_data[0] = position;
+    param_data[1] = speed;
+    SafeArrayUnaccessData(argument.parray);
+
+    bool return_value = _controller_execute(std::wstring(L"HandMoveA"), argument, result);
+
+    VariantClear(&argument);
+
+    return return_value;
+}
+
 
 std::string DriverBcap::get_last_error_info() const
 {
@@ -480,6 +585,10 @@ HRESULT DriverBcap::_get_last_error() const
 {
     return last_error_;
 }
+
+
+
+
 
 }
 

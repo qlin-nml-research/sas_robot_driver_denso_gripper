@@ -1,0 +1,12 @@
+
+roslaunch bcap_service bcap_service.launch ip_address:="192.168.0.2"
+
+
+Service Command
+get controller handel
+/bcap_service '{func_id: 3, vntArgs: [{vt: 8, value: "b-CAP"}, {vt: 8, value: "CaoProv.DENSO.VRC"}, {vt: 8, value: "localhost"}, {vt: 8, value: ""}] }
+
+return -- > controller ID,
+
+rosservice call /bcap_service '{func_id: 17, vntArgs: [{vt: 19, value: "<controller handle>"}, {vt: 8, value: "HandMoveA"}, {vt: 8195, value: "30, 100"}] }'
+rosservice call /bcap_service '{func_id: 17, vntArgs: [{vt: 19, value: "8"}, {vt: 8, value: "HandMoveA"}, {vt: 8195, value: "30, 100"}] }'

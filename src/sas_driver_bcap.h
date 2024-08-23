@@ -74,6 +74,7 @@ private:
 
     bool _error_check(const HRESULT& result);
     inline bool _robot_execute(const std::wstring& command, const VARIANT& option, VARIANT& result);
+    inline bool _controller_execute(const std::wstring& command, const VARIANT& option, VARIANT& result);
     HRESULT _set_socket_timeout(long micro_seconds);
     HRESULT _get_last_error() const;
 
@@ -143,6 +144,17 @@ public:
     inline bool set_slave_mode(long value) {return set_slave_mode(value,unwanted_variant_result_);}
 
     std::string get_last_error_info() const;
+
+
+    // added by Hung-Ching Lin for gripper
+    bool set_gripper_position(const unsigned char &position, const unsigned char &speed, VARIANT& result);
+    inline bool set_gripper_position(const unsigned char &position, const unsigned char &speed) {return set_gripper_position(position, speed, unwanted_variant_result_);}
+
+    bool get_gripper_is_busy(bool& is_busy);
+    bool get_gripper_is_holding(bool& is_holding);
+    bool get_gripper_in_position(bool& in_position);
+    bool get_gripper_position(double& position);
+    bool get_gripper_current_load(double& current_load);
 
 };
 

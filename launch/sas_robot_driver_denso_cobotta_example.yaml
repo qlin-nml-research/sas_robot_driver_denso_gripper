@@ -1,0 +1,7 @@
+"robot_ip_address": "192.168.0.2"
+"robot_port": 5007
+"robot_speed": 20.0
+"thread_sampling_time_nsec": 4000000
+"q_min": [-2.6180,  -1.0472,   -0.3142,   -2.9671,   -1.6581,   -2.9671]
+"q_max": [2.6180,    1.7453,    2.4435,    2.9671,    2.3562,    2.9671]
+"using_hand": true

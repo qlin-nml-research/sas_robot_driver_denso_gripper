@@ -1,0 +1,6 @@
+"robot_ip_address": "192.168.0.2"
+"robot_port": 5007
+"default_speed": 0.9
+"lock_name": "cobotta_2"
+"gripper_range_max": 30  # Integer only
+"gripper_range_min": 5   # Integer only
