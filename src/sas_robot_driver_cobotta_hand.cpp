@@ -82,12 +82,48 @@ namespace sas {
 
         ROS_INFO_STREAM("RobotDriverDensoHand::control_loop: Starting control loop.");
         while(!(*break_loops_)) {
-            double dummy_position = desired_gripper_width_;
-
+            bool worked; //bCap communication error code
+            double current_position = desired_gripper_width_;
+            bool busy, holding, in_position;
+            double current_load;
             // get the current gripper position
-
-            last_gripper_width_ = dummy_position;
-            cobotta_gripper_provider_->send_gripper_state(last_gripper_width_);
+            /**
+             * position: HandCurPos: get_gripper_position
+             * busy: HandBusyState: get_gripper_is_busy
+             * holding: HandHoldState: get_gripper_is_holding
+             * in_position: HandInposState: get_gripper_in_position
+             * current_load: HandCurLoad: get_gripper_current_load
+             */
+            worked = bcap_driver_->get_gripper_position(current_position);
+            if(!worked)
+            {
+                ROS_WARN_STREAM("RobotDriverDensoHand::control_loop: Failed to get gripper position. Error code = " + bcap_driver_->get_last_error_info());
+            }else {
+                // normalize the position
+                current_position = (current_position - configuration_.gripper_range_min) / (configuration_.gripper_range_max - configuration_.gripper_range_min);
+            }
+            worked = bcap_driver_->get_gripper_is_busy(busy);
+            if(!worked)
+            {
+                ROS_WARN_STREAM("RobotDriverDensoHand::control_loop: Failed to get gripper busy state. Error code = " + bcap_driver_->get_last_error_info());
+            }
+            worked = bcap_driver_->get_gripper_is_holding(holding);
+            if(!worked)
+            {
+                ROS_WARN_STREAM("RobotDriverDensoHand::control_loop: Failed to get gripper holding state. Error code = " + bcap_driver_->get_last_error_info());
+            }
+            worked = bcap_driver_->get_gripper_in_position(in_position);
+            if(!worked)
+            {
+                ROS_WARN_STREAM("RobotDriverDensoHand::control_loop: Failed to get gripper in position state. Error code = " + bcap_driver_->get_last_error_info());
+            }
+            worked = bcap_driver_->get_gripper_current_load(current_load);
+            if(!worked)
+            {
+                ROS_WARN_STREAM("RobotDriverDensoHand::control_loop: Failed to get gripper current load. Error code = " + bcap_driver_->get_last_error_info());
+            }
+            last_gripper_width_ = current_position;
+            cobotta_gripper_provider_->send_gripper_state(current_position, busy, holding, in_position, current_load);
             ros::spinOnce();
             loop_rate.sleep();
         }
@@ -105,7 +141,6 @@ namespace sas {
     }
 
     bool RobotDriverDensoHand::blocking_move(const double& width, const double& speed_ratio) {
-        bool worked; //bCap communication error code
         if(0>width || width>1)
         {
             ROS_WARN_STREAM("RobotDriverDensoHand::blocking_move: Requested width is out of range. Clipping to range [0,1].");
@@ -124,6 +159,7 @@ namespace sas {
         }catch (std::exception &e) {
             throw std::runtime_error("  FAILED TO acquire() IN FUNCTION blocking_move(). Error in acquiring robot resource lock: " + std::string(e.what()));
         }
+        bool worked; //bCap communication error code
 
         worked = bcap_driver_->set_gripper_position(position, speed);
         if(!worked)

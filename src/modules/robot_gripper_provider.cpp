@@ -34,18 +34,31 @@ namespace sas {
         gripper_move_function_(nullptr),
         gripper_in_use_ptr_(resource_ptr)
     {
-        move_server_ = nh_.advertiseService(configuration_.topic_prefix+MOVE_SERVICE_SUFFIX, &CobottaGripperProvider::_move_cb, this);
+        move_server_ = nh_.advertiseService(configuration_.topic_prefix+MOVE_SERVICE_SUFFIX, &CobottaGripperProvider::_srv_move_callback, this);
         gripper_status_publisher_ = nh_.advertise<GripperState_t>(configuration_.topic_prefix+STATUS_TOPIC_SUFFIX, 1);
 
     }
 
-    void CobottaGripperProvider::send_gripper_state(const double &pos) const {
+    void CobottaGripperProvider::send_gripper_state(const double &pos, const bool &busy, const bool &holding, const bool &in_position, const double &current_load) const {
         GripperState_t msg;
-        msg.position = pos;
+        msg.busy = busy;
+        msg.holding= holding;
+        msg.in_position = in_position;
+        msg.current_load = static_cast<float>(current_load);
+        msg.position = static_cast<float>(pos);
         gripper_status_publisher_.publish(msg);
     }
 
-    bool CobottaGripperProvider::_move_cb(MoveRequest_t &req, MoveResponse_t &res) {
+    void CobottaGripperProvider::register_move_function(std::function<bool(const double&, const double&)> move_function) {
+        gripper_move_function_ = std::move(move_function);
+    }
+
+    void CobottaGripperProvider::deregister_move_function() {
+        gripper_move_function_ = nullptr;
+    }
+
+
+    bool CobottaGripperProvider::_srv_move_callback(MoveRequest_t &req, MoveResponse_t &res) {
         double speed = req.speed; // between 0 and 1
         double width = req.width; // between 0 and 1
         if(speed <= 0) {
@@ -54,12 +67,12 @@ namespace sas {
         speed = _clip(speed, 0.1, 1);
         width = _clip(width, 0, 1);
 
-        ROS_INFO_STREAM("CobottaGripperProvider::_move_cb: Requested to move gripper to position: " << width << " with speed: " << speed);
         if(gripper_move_function_==nullptr) {
-            ROS_INFO_STREAM("CobottaGripperProvider::_move_cb: Gripper move function not set.");
+            ROS_WARN_STREAM("CobottaGripperProvider::_move_cb: Gripper move function not set.");
             res.success = false;
             return true;
         }
+        ROS_INFO_STREAM("CobottaGripperProvider::Service Callback: Requested to move gripper to position: " << width << " with speed: " << speed);
         auto timeout = std::chrono::steady_clock::now() + std::chrono::milliseconds(MOVE_TIMEOUT_MS);
         bool lock_ret = false;
         while (std::chrono::steady_clock::now()<timeout) {

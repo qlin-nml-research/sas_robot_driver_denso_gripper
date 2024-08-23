@@ -150,6 +150,12 @@ public:
     bool set_gripper_position(const unsigned char &position, const unsigned char &speed, VARIANT& result);
     inline bool set_gripper_position(const unsigned char &position, const unsigned char &speed) {return set_gripper_position(position, speed, unwanted_variant_result_);}
 
+    bool get_gripper_is_busy(bool& is_busy);
+    bool get_gripper_is_holding(bool& is_holding);
+    bool get_gripper_in_position(bool& in_position);
+    bool get_gripper_position(double& position);
+    bool get_gripper_current_load(double& current_load);
+
 };
 
 }

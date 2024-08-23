@@ -72,19 +72,15 @@ namespace sas {
 
         ~CobottaGripperProvider()=default;
 
-        void register_move_function(std::function<bool(const double&, const double&)> move_function) {
-            gripper_move_function_ = std::move(move_function);
-        }
+        void register_move_function(std::function<bool(const double&, const double&)> move_function);
 
-        void deregister_move_function() {
-            gripper_move_function_ = nullptr;
-        }
+        void deregister_move_function();
 
-        void send_gripper_state(const double &pos) const;
+        void send_gripper_state(const double &pos, const bool &busy, const bool &holding, const bool &in_position, const double &current_load) const;
 
 
     protected:
-        bool _move_cb(MoveRequest_t &req, MoveResponse_t &res);
+        bool _srv_move_callback(MoveRequest_t &req, MoveResponse_t &res);
 
 
     };

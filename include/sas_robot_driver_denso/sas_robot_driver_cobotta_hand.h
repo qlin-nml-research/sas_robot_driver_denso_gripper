@@ -57,7 +57,7 @@ namespace sas {
     class RobotDriverDensoHand {
     private:
         ros::NodeHandle& nodehandle_;
-        RobotDriverDensoHandConfiguration configuration_;
+        const RobotDriverDensoHandConfiguration configuration_;
         std::atomic_bool* break_loops_;
         std::mutex gripper_resource_lock_;
 
@@ -93,8 +93,7 @@ namespace sas {
 
         void disconnect() const;
 
-        bool blocking_
-        move(const double& width, const double& speed_ratio);
+        bool blocking_move(const double& width, const double& speed_ratio);
 
     };
 
