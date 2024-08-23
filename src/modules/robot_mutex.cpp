@@ -56,16 +56,17 @@ namespace sas {
         };
     }
 
-    RobotMutex::RobotMutex(const std::string &lock_name_space, const std::string &instance_name, const bool &master):
-    has_locked_(false),
-    lock_name_space_(lock_name_space),
-    instance_name_(instance_name),
-    master_(master)  // if true, the semaphore will be deleted in the destructor
+    RobotMutex::RobotMutex(const std::string &lock_name_space, const std::string &instance_name, const bool &is_master, const bool &debug):
+            has_locked_(false),
+            lock_name_space_(lock_name_space),
+            instance_name_(instance_name),
+            is_master_(is_master),  // if true, the semaphore will be deleted in the destructor
+            debug_(debug)
     {
         /**
-         * TODO: better checking of only one master instance
+         * TODO: better checking of only one is_master instance
          * if the semaphore is not deleted in the previous run and is currently 0, there might be a deadlock with no one able to acquire it.
-         * the master instance in this case will manage the deletion of the semaphore.
+         * the is_master instance in this case will manage the deletion of the semaphore.
          */
         // if lock_name_space_ has leading / remove it
         if(lock_name_space_.front() == '/') {
@@ -85,7 +86,7 @@ namespace sas {
         if(sem_close(shared_mutex_) == -1) {
             _check_erroron("~RobotMutex");
         }
-        if(master_) {
+        if(is_master_) {
             if(sem_unlink((ROBOT_MUTEX_PREFIX+lock_name_space_).c_str()) == -1) {
                 _check_erroron("~RobotMutex");
             }
@@ -97,13 +98,13 @@ namespace sas {
         if(has_locked_) {
             THROW_RUNTIME_ERROR_FN("acquire", "already locked")
         }
-        unsigned int ms_offset = timeout_ms<=0?ROBOT_MUTEX_MAX_TIMEOUT_MS:timeout_ms;
+        unsigned int ms_offset = timeout_ms==0?ROBOT_MUTEX_MAX_TIMEOUT_MS:timeout_ms;
         auto time_now = std::chrono::steady_clock::now();
         auto timeout_ts = std::chrono::time_point_cast<std::chrono::milliseconds>(time_now + std::chrono::milliseconds(ms_offset));
         while(std::chrono::steady_clock::now() < timeout_ts) {
             if (sem_trywait (shared_mutex_) == 0) {
                 has_locked_ = true;
-                std::cout << "RobotMutex:["<<lock_name_space_<<"/"<<instance_name_<<"]::acquire::locked" << std::endl;
+                if(debug_){std::cout << "RobotMutex:[" << lock_name_space_ << "/" << instance_name_ << "]::acquire::locked" << std::endl;}
                 return true;
             }
             if(errno == EAGAIN) {
@@ -124,7 +125,8 @@ namespace sas {
 
     void RobotMutex::release(){
         if(!has_locked_) {
-            THROW_RUNTIME_ERROR_FN("release", "not locked")
+            if(debug_){THROW_RUNTIME_ERROR_FN("release", "not locked")}
+            else{return;}
         }
         if(sem_post(shared_mutex_) == -1) {
             switch(errno) {

@@ -32,9 +32,9 @@
 #include <ros/ros.h>
 // #include <sas_clock/sas_clock.h>
 
-#define ROBOT_DRIVER_HAND_LOOP_RATE 10  //100ms
+#define ROBOT_DRIVER_HAND_LOOP_RATE 2  //500ms
 #define ROBOT_DRIVER_GRIPPER_SPEED_SCALING 100.0   // float in percentage to 0-100
-
+#define ROBOT_DRIVER_GRIPPER_SPEED_MIN_CAP 0.15  // Cap the minimum speed to 15% of the maximum speed (hot fix to avoid bcap timeout
 
 namespace sas {
     //Declared internally
@@ -61,7 +61,15 @@ namespace sas {
         std::atomic_bool* break_loops_;
         std::mutex gripper_resource_lock_;
 
-        double last_gripper_width_ = 0;
+        struct GripperStateStruct{
+            bool busy;
+            bool holding;
+            bool in_position;
+            double current_load;
+            double position;
+        };
+
+        GripperStateStruct last_gripper_state_{};
         double desired_gripper_width_ = 0;
 
         //BCAP driver
@@ -75,6 +83,8 @@ namespace sas {
         static inline double _clip(const double &n, const double &lower, const double &upper) {
             return std::max(lower, std::min(n, upper));
         }
+
+        bool _update_gripper_state();
 
     public:
         RobotDriverDensoHand(const RobotDriverDensoHand&)=delete;

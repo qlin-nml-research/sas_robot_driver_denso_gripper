@@ -68,66 +68,10 @@ namespace sas {
             throw std::runtime_error("  FAILED TO ControllerConnect() IN FUNCTION Connect(). Error code = " + bcap_driver_->get_last_error_info());
         }
 
-        bcap_driver_->initialize_controller_variable_handles();
-
     }
 
     void RobotDriverDensoHand::initialize() {
         cobotta_gripper_provider_->register_move_function(std::bind(&RobotDriverDensoHand::blocking_move, this, std::placeholders::_1, std::placeholders::_2));
-    }
-
-    void RobotDriverDensoHand::control_loop() {
-
-        ros::Rate loop_rate(ROBOT_DRIVER_HAND_LOOP_RATE);
-
-        ROS_INFO_STREAM("RobotDriverDensoHand::control_loop: Starting control loop.");
-        while(!(*break_loops_)) {
-            bool worked; //bCap communication error code
-            double current_position = desired_gripper_width_;
-            bool busy, holding, in_position;
-            double current_load;
-            // get the current gripper position
-            /**
-             * position: HandCurPos: get_gripper_position
-             * busy: HandBusyState: get_gripper_is_busy
-             * holding: HandHoldState: get_gripper_is_holding
-             * in_position: HandInposState: get_gripper_in_position
-             * current_load: HandCurLoad: get_gripper_current_load
-             */
-            worked = bcap_driver_->get_gripper_position(current_position);
-            if(!worked)
-            {
-                ROS_WARN_STREAM("RobotDriverDensoHand::control_loop: Failed to get gripper position. Error code = " + bcap_driver_->get_last_error_info());
-            }else {
-                // normalize the position
-                current_position = (current_position - configuration_.gripper_range_min) / (configuration_.gripper_range_max - configuration_.gripper_range_min);
-            }
-            worked = bcap_driver_->get_gripper_is_busy(busy);
-            if(!worked)
-            {
-                ROS_WARN_STREAM("RobotDriverDensoHand::control_loop: Failed to get gripper busy state. Error code = " + bcap_driver_->get_last_error_info());
-            }
-            worked = bcap_driver_->get_gripper_is_holding(holding);
-            if(!worked)
-            {
-                ROS_WARN_STREAM("RobotDriverDensoHand::control_loop: Failed to get gripper holding state. Error code = " + bcap_driver_->get_last_error_info());
-            }
-            worked = bcap_driver_->get_gripper_in_position(in_position);
-            if(!worked)
-            {
-                ROS_WARN_STREAM("RobotDriverDensoHand::control_loop: Failed to get gripper in position state. Error code = " + bcap_driver_->get_last_error_info());
-            }
-            worked = bcap_driver_->get_gripper_current_load(current_load);
-            if(!worked)
-            {
-                ROS_WARN_STREAM("RobotDriverDensoHand::control_loop: Failed to get gripper current load. Error code = " + bcap_driver_->get_last_error_info());
-            }
-            last_gripper_width_ = current_position;
-            cobotta_gripper_provider_->send_gripper_state(current_position, busy, holding, in_position, current_load);
-            ros::spinOnce();
-            loop_rate.sleep();
-        }
-        ROS_INFO_STREAM("RobotDriverDensoHand::control_loop: Exiting control loop.");
     }
 
     void RobotDriverDensoHand::deinitialize() const {
@@ -140,13 +84,105 @@ namespace sas {
         bcap_driver_->close();
     }
 
+    void RobotDriverDensoHand::control_loop() {
+
+        ros::Rate loop_rate(ROBOT_DRIVER_HAND_LOOP_RATE);
+
+        ROS_INFO_STREAM("RobotDriverDensoHand::control_loop: Starting control loop.");
+        while(!(*break_loops_)) {
+            last_gripper_state_.position = desired_gripper_width_;
+            /**
+             * TODO: currently below function are not available in whe joint driver has arm in SlvMode
+             */
+//            robot_resource_mutex_->acquire();
+//            try {
+//                auto ret = _update_gripper_state();
+//                if (!ret) {ROS_WARN_STREAM("RobotDriverDensoHand::control_loop: Failed to update gripper state.");}
+//            }catch (std::exception &e) {
+//                ROS_WARN_STREAM("RobotDriverDensoHand::control_loop: Failed to update gripper state. Error: " + std::string(e.what()));
+//            }
+//            robot_resource_mutex_->release();
+            cobotta_gripper_provider_->send_gripper_state(
+                    last_gripper_state_.position, last_gripper_state_.busy,
+                    last_gripper_state_.holding, last_gripper_state_.in_position,
+                    last_gripper_state_.current_load);
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+        ROS_INFO_STREAM("RobotDriverDensoHand::control_loop: Exiting control loop.");
+    }
+
+    /**
+     * @brief update the gripper state from bcap
+     * @return success
+     */
+    bool RobotDriverDensoHand::_update_gripper_state(){
+        /**
+         * position: HandCurPos: get_gripper_position
+         * busy: HandBusyState: get_gripper_is_busy
+         * holding: HandHoldState: get_gripper_is_holding
+         * in_position: HandInposState: get_gripper_in_position
+         * current_load: HandCurLoad: get_gripper_current_load
+         */
+        GripperStateStruct current_state = {false, false, false, 0, 0};
+//        try {
+//            if (!robot_resource_mutex_->acquire(4000)) {
+//                throw std::runtime_error("  FAILED TO acquire() IN FUNCTION _update_gripper_state(). Attempted acquiring robot resource lock TIMEOUT.");
+//            }
+//        }catch (std::exception &e) {
+//            throw std::runtime_error("  FAILED TO acquire() IN FUNCTION _update_gripper_state(). Error in acquiring robot resource lock: " + std::string(e.what()));
+//        }
+//        gripper_resource_lock_.lock();
+        bool worked; //bCap communication error code
+
+        worked = bcap_driver_->get_gripper_position(current_state.position);
+        if(!worked)
+        {
+            ROS_WARN_STREAM("RobotDriverDensoHand::control_loop: Failed to get gripper position. Error code = " + bcap_driver_->get_last_error_info());
+            return false;
+        }else {
+            // normalize the position
+            current_state.position = (current_state.position - configuration_.gripper_range_min) / (configuration_.gripper_range_max - configuration_.gripper_range_min);
+        }
+        worked = bcap_driver_->get_gripper_is_busy(current_state.busy);
+        if(!worked)
+        {
+            ROS_WARN_STREAM("RobotDriverDensoHand::control_loop: Failed to get gripper busy state. Error code = " + bcap_driver_->get_last_error_info());
+            return false;
+        }
+        worked = bcap_driver_->get_gripper_is_holding(current_state.holding);
+        if(!worked)
+        {
+            ROS_WARN_STREAM("RobotDriverDensoHand::control_loop: Failed to get gripper holding state. Error code = " + bcap_driver_->get_last_error_info());
+            return false;
+        }
+        worked = bcap_driver_->get_gripper_in_position(current_state.in_position);
+        if(!worked)
+        {
+            ROS_WARN_STREAM("RobotDriverDensoHand::control_loop: Failed to get gripper in position state. Error code = " + bcap_driver_->get_last_error_info());
+            return false;
+        }
+        worked = bcap_driver_->get_gripper_current_load(current_state.current_load);
+        if(!worked)
+        {
+            ROS_WARN_STREAM("RobotDriverDensoHand::control_loop: Failed to get gripper current load. Error code = " + bcap_driver_->get_last_error_info());
+            return false;
+        }
+
+//        try { robot_resource_mutex_->release(); }catch(...){}
+//        gripper_resource_lock_.unlock();
+
+        last_gripper_state_ = current_state;
+        return true;
+    }
+
     bool RobotDriverDensoHand::blocking_move(const double& width, const double& speed_ratio) {
         if(0>width || width>1)
         {
             ROS_WARN_STREAM("RobotDriverDensoHand::blocking_move: Requested width is out of range. Clipping to range [0,1].");
         }
         const auto _width = _clip(width, 0.0, 1.0);
-        const auto _speed = _clip(speed_ratio, 0.0, 1.0);
+        const auto _speed = _clip(speed_ratio, ROBOT_DRIVER_GRIPPER_SPEED_MIN_CAP, 1.0);
         auto pos_double = _width*(configuration_.gripper_range_max-configuration_.gripper_range_min)+configuration_.gripper_range_min;
         auto position = static_cast<unsigned char>(pos_double);
         auto speed = static_cast<unsigned char>(_speed*ROBOT_DRIVER_GRIPPER_SPEED_SCALING);

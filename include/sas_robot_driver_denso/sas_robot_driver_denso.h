@@ -110,8 +110,8 @@ public:
 
     // Added 2024_08_21 by Quentin Lin for cobotta robot
     bool mutex_is_locked() const;
-    // bool mutex_acquire(const unsigned int &timeout_ms=0);
-    // void mutex_release();
+    bool mutex_acquire(const unsigned int &timeout_ms=0);
+    void mutex_release();
 };
 }
 

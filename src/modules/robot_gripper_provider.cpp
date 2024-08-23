@@ -64,8 +64,8 @@ namespace sas {
         if(speed <= 0) {
             speed = configuration_.default_speed;
         }
-        speed = _clip(speed, 0.1, 1);
-        width = _clip(width, 0, 1);
+        speed = _clip(speed, 0.0, 1);
+        width = _clip(width, 0.0, 1);
 
         if(gripper_move_function_==nullptr) {
             ROS_WARN_STREAM("CobottaGripperProvider::_move_cb: Gripper move function not set.");

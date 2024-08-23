@@ -49,12 +49,15 @@ namespace sas {
         std::atomic_bool has_locked_;
         std::string lock_name_space_;
         std::string instance_name_;
-        const bool master_;
+        const bool is_master_;
+
+        //debugging
+        const bool debug_;
 
     public:
         RobotMutex()=delete;
         RobotMutex(const RobotMutex&)=delete;
-        RobotMutex(const std::string &lock_name_space, const std::string &instance_name, const bool &master=false);
+        RobotMutex(const std::string &lock_name_space, const std::string &instance_name, const bool &is_master=false, const bool &debug=false);
         ~RobotMutex();
 
         bool acquire(const unsigned int &timeout_ms=0);
