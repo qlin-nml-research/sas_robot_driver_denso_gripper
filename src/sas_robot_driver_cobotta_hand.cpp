@@ -102,6 +102,9 @@ namespace sas {
 //                ROS_WARN_STREAM("RobotDriverDensoHand::control_loop: Failed to update gripper state. Error: " + std::string(e.what()));
 //            }
 //            robot_resource_mutex_->release();
+            bool is_busy = robot_resource_mutex_->has_locked();
+            cobotta_gripper_provider_->send_gripper_in_use(is_busy);
+            last_gripper_state_.busy = is_busy;
             cobotta_gripper_provider_->send_gripper_state(
                     last_gripper_state_.position, last_gripper_state_.busy,
                     last_gripper_state_.holding, last_gripper_state_.in_position,
@@ -187,6 +190,12 @@ namespace sas {
         auto position = static_cast<unsigned char>(pos_double);
         auto speed = static_cast<unsigned char>(_speed*ROBOT_DRIVER_GRIPPER_SPEED_SCALING);
 
+        cobotta_gripper_provider_->send_gripper_state(
+                last_gripper_state_.position, true,
+                last_gripper_state_.holding, last_gripper_state_.in_position,
+                last_gripper_state_.current_load);
+        cobotta_gripper_provider_->send_gripper_in_use(true);
+
         try {
             auto ret = robot_resource_mutex_->acquire();
             if (!ret) {
@@ -208,6 +217,8 @@ namespace sas {
         // TODO: function call to bcap appear to be blocking already
 
         robot_resource_mutex_->release();
+        cobotta_gripper_provider_->send_gripper_in_use(false);
+
         return true;
     }
 
