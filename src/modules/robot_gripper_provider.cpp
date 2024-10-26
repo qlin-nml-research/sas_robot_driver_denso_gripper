@@ -29,24 +29,37 @@
 
 namespace sas {
     CobottaGripperProvider::CobottaGripperProvider(ros::NodeHandle &nh, const CobottaGripperProviderConfiguration &configuration, std::mutex *resource_ptr):
-        nh_(nh),
         configuration_(configuration),
+        nh_(nh),
+        msg_header_(),
         gripper_move_function_(nullptr),
         gripper_in_use_ptr_(resource_ptr)
     {
+        msg_header_.seq = 0;
+        msg_header_.frame_id = configuration_.topic_prefix;
         move_server_ = nh_.advertiseService(configuration_.topic_prefix+MOVE_SERVICE_SUFFIX, &CobottaGripperProvider::_srv_move_callback, this);
         gripper_status_publisher_ = nh_.advertise<GripperState_t>(configuration_.topic_prefix+STATUS_TOPIC_SUFFIX, 1);
+        gripper_in_use_publisher_ = nh_.advertise<GripperInUse_t>(configuration_.topic_prefix+INUSE_TOPIC_SUFFIX, 1);
 
     }
 
-    void CobottaGripperProvider::send_gripper_state(const double &pos, const bool &busy, const bool &holding, const bool &in_position, const double &current_load) const {
+    void CobottaGripperProvider::send_gripper_in_use(const bool &inuse){
+        GripperInUse_t msg;
+        msg.data = inuse;
+        gripper_in_use_publisher_.publish(msg);
+    }
+
+    void CobottaGripperProvider::send_gripper_state(const double &pos, const bool &busy, const bool &holding, const bool &in_position, const double &current_load) {
         GripperState_t msg;
+        msg_header_.stamp = ros::Time::now();
+        msg.header = msg_header_;
         msg.busy = busy;
         msg.holding= holding;
         msg.in_position = in_position;
         msg.current_load = static_cast<float>(current_load);
         msg.position = static_cast<float>(pos);
         gripper_status_publisher_.publish(msg);
+        msg_header_.seq ++;
     }
 
     void CobottaGripperProvider::register_move_function(std::function<bool(const double&, const double&)> move_function) {

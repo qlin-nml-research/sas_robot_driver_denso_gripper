@@ -32,7 +32,7 @@
 #include <ros/ros.h>
 // #include <sas_clock/sas_clock.h>
 
-#define ROBOT_DRIVER_HAND_LOOP_RATE 2  //500ms
+#define ROBOT_DRIVER_HAND_LOOP_RATE 10  //50ms
 #define ROBOT_DRIVER_GRIPPER_SPEED_SCALING 100.0   // float in percentage to 0-100
 #define ROBOT_DRIVER_GRIPPER_SPEED_MIN_CAP 0.15  // Cap the minimum speed to 15% of the maximum speed (hot fix to avoid bcap timeout
 

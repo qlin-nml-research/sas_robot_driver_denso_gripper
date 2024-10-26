@@ -28,6 +28,7 @@
 #include <sas_robot_driver_denso/GripperState.h>
 #include <sas_robot_driver_denso/Move.h>
 #include <eigen3/Eigen/Dense>
+#include <std_msgs/Bool.h>
 #include <ros/ros.h>
 #include <functional>
 #include <utility>
@@ -36,12 +37,14 @@
 
 #define MOVE_SERVICE_SUFFIX "/action/move"
 #define STATUS_TOPIC_SUFFIX "/get/gripper_state"
+#define INUSE_TOPIC_SUFFIX "/get/gripper_inuse"
 #define MOVE_TIMEOUT_MS 3000
 
 namespace sas {
     typedef sas_robot_driver_denso::Move::Request MoveRequest_t;
     typedef sas_robot_driver_denso::Move::Response MoveResponse_t;
     typedef sas_robot_driver_denso::GripperState GripperState_t;
+    typedef std_msgs::Bool GripperInUse_t;
 
     struct CobottaGripperProviderConfiguration
     {
@@ -53,6 +56,7 @@ namespace sas {
     private:
         CobottaGripperProviderConfiguration configuration_;
         ros::NodeHandle nh_;
+        std_msgs::Header msg_header_;
 
         std::function<bool(const double&, const double&)> gripper_move_function_;
 
@@ -60,6 +64,7 @@ namespace sas {
         ros::ServiceServer move_server_;
 
         ros::Publisher gripper_status_publisher_;
+        ros::Publisher gripper_in_use_publisher_;
 
         static inline double _clip(const double &n, const double &lower, const double &upper) {
             return std::max(lower, std::min(n, upper));
@@ -76,8 +81,9 @@ namespace sas {
 
         void deregister_move_function();
 
-        void send_gripper_state(const double &pos, const bool &busy, const bool &holding, const bool &in_position, const double &current_load) const;
+        void send_gripper_state(const double &pos, const bool &busy, const bool &holding, const bool &in_position, const double &current_load);
 
+        void send_gripper_in_use(const bool &inuse);
 
     protected:
         bool _srv_move_callback(MoveRequest_t &req, MoveResponse_t &res);
